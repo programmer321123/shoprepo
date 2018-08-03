@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<link rel ="stylesheet" href = "foradminstyle.css" type = "text/css"/>
+<title>Insert title here</title>
+<script>
+var orders;
+var products;
+var curino = 0;
+var cpro = 0;
+function reqcallback(){
+    if(this.status === 200){
+ 	   var res = JSON.parse(this.responseText);
+ 	   console.log(res);
+ 	   switch(res.type){
+ 	   case "uppro":
+ 		  if(res.result=="sent"){
+ 			console.log("product uploaded");
+		  }else{
+			   console.log("product upload error");
+		  }
+ 		   break;
+ 	   case "orders":
+ 		   document.getElementById("currentorders").innerHTML = "";
+ 		  document.getElementById("comporders").innerHTML = "";
+ 		   orders = JSON.parse(res.data);
+ 		   orders.forEach(displayorder);
+ 		   break;
+ 	  case "oupdate":
+		   console.log("order updated");
+		   break;   
+ 	  case "products":
+ 		  document.getElementById("foundpro").innerHTML = "";
+ 		 products = JSON.parse(res.data);
+ 		 products.forEach(displayp);
+ 		  break;
+ 		   
+         }
+ 	  
+}
+}
+
+function displayorder(order,index){
+	var item = document.createElement("div");
+	item.setAttribute("id","order" + index);
+	item.setAttribute("class","order");
+	item.setAttribute("onclick","onordercl('"+index+"')");
+	var ptitle = document.createElement("p");
+	ptitle.setAttribute("class","otitle");
+	ptitle.innerHTML = order.date;
+	item.appendChild(ptitle);
+	switch(order.state){
+	case 2:
+		document.getElementById("currentorders").appendChild(item);
+		break;
+	case 3:
+		document.getElementById("comporders").appendChild(item);
+		break;
+	}
+}
+
+function displayp(product,index){
+	var item = document.createElement("div");
+	item.setAttribute("id","p" + index);
+	item.setAttribute("class","product");
+	item.setAttribute("onclick","shpdetails('"+index+"')");
+	var ptitle = document.createElement("p");
+	ptitle.setAttribute("class","pprotitle");
+	ptitle.innerHTML = product.name;
+	item.appendChild(ptitle);
+	var pprice = document.createElement("p");
+	pprice.setAttribute("class","pproprice");
+	pprice.innerHTML = product.price + "USD";
+	item.appendChild(pprice);
+	document.getElementById("foundpro").appendChild(item);
+}
+
+function displaypl(product,index){
+		var item = document.createElement("div");
+		item.setAttribute("id",index);
+		item.setAttribute("class","product");
+		var ptitle = document.createElement("p");
+		ptitle.setAttribute("class","pprotitle");
+		ptitle.innerHTML = product.name;
+		item.appendChild(ptitle);
+		var pcount = document.createElement("p");
+		pcount.setAttribute("class","pprocount");
+		pcount.innerHTML = product.count;
+		item.appendChild(pcount);
+		var pprice = document.createElement("p");
+		pprice.setAttribute("class","pproprice");
+		pprice.innerHTML = product.price*product.count + "USD";
+		item.appendChild(pprice);
+		document.getElementById("oproducts").appendChild(item);
+}
+
+function onordercl(i){
+	document.getElementById("orderdetails").style.display="block";
+	curino = i;
+	document.getElementById("oproducts").innerHTML = "";
+	console.log("produkty " + orders[i].products);
+	var prol = JSON.parse(orders[i].products);
+	prol.forEach(displaypl);
+	document.getElementById("uname").innerHTML = orders[i].name + "  " + orders[i].surname;
+	document.getElementById("mail").innerHTML =orders[i].mail;
+	document.getElementById("pnumber").innerHTML =orders[i].pnumber;
+	document.getElementById("street").innerHTML =orders[i].street;
+	document.getElementById("zipcode").innerHTML =orders[i].zipcode;
+	document.getElementById("city").innerHTML =orders[i].street;	
+	if(orders[i].state==2){
+		document.getElementById("bcomp").style.display="block";
+	}else{
+		document.getElementById("bcomp").style.display="none";
+	}
+}
+
+function onimgch(i){
+	var input = document.getElementById("imgin"+i);
+	 var reader = new FileReader();
+	    reader.onload = function(){
+	      var dataURL = reader.result;
+	      document.getElementById("img"+i).src = dataURL;
+	    };
+	    reader.readAsDataURL(input.files[0]);
+}
+
+function shpdetails(i){
+	document.getElementById("chgpview").style.display = "block";
+	document.getElementById("chimgdiv").innerHTML = "";
+	cpro = i;
+	document.getElementById("chpname").value = products[i].name;
+	document.getElementById("chpdesc").value = products[i].description;
+	document.getElementById("chpprice").value = products[i].price;
+	if(products[i].ifactive==1){
+		document.getElementById("inpactive").checked = true;
+	}else{
+		document.getElementById("inpactive").checked = false;
+	}
+	for(var l = 0;l<products[i].imgcount;l++){
+		var box = document.createElement("div");
+		box.setAttribute("class","imgbox");
+		var img = document.createElement("img");
+		img.setAttribute("id","img"+l);
+		img.setAttribute("class","imgpch");
+		img.setAttribute("src","http://something.nazwa.pl:8080/shop/images/"+products[i].id+"img"+l+".png");
+		box.appendChild(img);
+		var imgin = document.createElement("input");
+		imgin.setAttribute("id","imgin" + l);
+		imgin.setAttribute("type","file");
+		imgin.setAttribute("name", "Choose file");
+		imgin.setAttribute("oninput","onimgch('"+l+"')");
+		box.appendChild(imgin);
+		document.getElementById("chimgdiv").appendChild(box);
+	}
+	
+}
+
+function bsavechp(){
+	var pname = document.getElementById("chpname").value;
+	var pdesc = document.getElementById("chpdesc").value;
+	var pprice = document.getElementById("chpprice").value;	
+	var category = document.getElementById("scategory2").value;
+	var active = 1;
+	if(!document.getElementById("inpactive").checked)active=0;
+	 var formdata = new FormData();
+	    formdata.append("id",products[cpro].id);
+	    formdata.append("name",pname);
+	    formdata.append("description",pdesc);
+	    formdata.append("price",pprice);
+	    formdata.append("icount",products[cpro].imgcount);
+	    formdata.append("category",category);
+	    formdata.append("active",active);
+	    for(var i= 0;i<products[cpro].imgcount;i++){
+	    	 formdata.append("img"+i,document.getElementById("imgin"+i).files[0]);
+	    }
+	    var req = new XMLHttpRequest();
+	   	req.open("POST", "http://something.nazwa.pl:8080/shop/uppro", true);
+	      req.addEventListener('load', reqcallback);
+	    req.send(formdata);
+}
+function completed(){
+	document.getElementById("order"+curino).style.display = "none";
+	 var req = new XMLHttpRequest();
+	   	req.open("POST", "http://something.nazwa.pl:8080/shop/compliteo?id="+orders[curino].id, true);
+	      req.addEventListener('load', reqcallback);
+	    req.send();
+}
+
+
+function sendproduct(){
+	var pname = document.getElementById("pname").value;
+	var pdesc = document.getElementById("pdescription").value;
+	var pprice = document.getElementById("pprice").value;
+	var filelist = document.getElementById("upimg").files;
+	var category = document.getElementById("scategory").value;
+	 var formdata = new FormData();
+	    formdata.append("id",0);
+	    formdata.append("name",pname);
+	    formdata.append("description",pdesc);
+	    formdata.append("price",pprice);
+	    formdata.append("icount",filelist.length);
+	    formdata.append("category",category);
+	    formdata.append("active",1);
+	    for(var i= 0;i<filelist.length;i++){
+	    	 formdata.append("img"+i,filelist[i]);
+	    }
+    var req = new XMLHttpRequest();
+   	req.open("POST", "http://something.nazwa.pl:8080/shop/uppro", true);
+      req.addEventListener('load', reqcallback);
+    req.send(formdata);
+}
+
+
+function getorders(state){
+	 var req = new XMLHttpRequest();
+	   	req.open("GET", "http://something.nazwa.pl:8080/shop/getordersfa?state="+state, true);
+	      req.addEventListener('load', reqcallback);
+	    req.send();
+}
+
+
+function searchp(){
+   var pname = document.getElementById("inpschpn").value;
+   var req = new XMLHttpRequest();
+  	req.open("GET",  "http://something.nazwa.pl:8080/shop/getproducts?name="+pname+"&price="+0+"&category=category&sorting=''&active=2", true);
+     req.addEventListener('load', reqcallback);
+   req.send();
+}
+
+
+
+function shel(id){
+	switch(id){
+	case "currentorders":
+		getorders(2);
+		break;
+	case "comporders":
+		getorders(3);
+		break;
+	}
+	
+	 
+		document.getElementById("uploadproduct").style.display="none";
+		document.getElementById("currentorders").style.display="none";
+		document.getElementById("comporders").style.display="none";
+     	document.getElementById("modifyproduct").style.display="none";
+     	document.getElementById("chgpview").style.display="none";
+     	document.getElementById("orderdetails").style.display="none";
+     
+	document.getElementById(id).style.display = "block";
+}
+function hidepd(){
+	document.getElementById("orderdetails").style.display="none";
+	document.getElementById("chgpview").style.display = "none";
+}
+
+
+
+</script>
+</head>
+<body>
+<div id = "middle">
+
+
+
+<div id = "menu">
+<button class = "bmenu" onclick="shel('currentorders')">Current Orders</button>
+<button class = "bmenu" onclick="shel('comporders')">Completed Orders</button>
+<button class = "bmenu" onclick="shel('modifyproduct')">Modify product</button>
+<button class = "bmenu" onclick="shel('uploadproduct')">Upload product</button>
+</div>
+
+<div id="orderdetails">
+<button id = "closepd" onclick = "hidepd()">X</button>
+<div id = "oproducts"></div>
+<p id = "uname"></p>
+<p id = "mail"></p>
+<p id = "pnumber"></p>
+<p id = "street"></p>
+<p id = "zipcode"></p>
+<p id = "city"></p>
+<button id="bcomp" onclick = "completed()">Completed</button>
+</div>
+
+<div id="currentorders">
+
+</div>
+
+<div id="comporders">
+
+</div>
+
+<div id="modifyproduct">
+<input id = "inpschpn" type="text" placeholder="product name"><button id = "bschpbn" onclick="searchp()">search</button>
+<div id = "foundpro"> </div>
+<div id ="chgpview">
+<button id = "closepd" onclick = "hidepd()">X</button>
+<input id = "chpname" type = "text">
+
+<textarea id = "chpdesc" ></textarea>
+<input id = "chpprice" type = "number">
+<select id = "scategory2"><option>category1</option><option>category2</option><option>category3</option></select>
+<label id = "ifain"><input id = "inpactive" name = "active" type = "checkbox">product visible for customer</label>
+<div id = "chimgdiv"></div>
+<button id = "bsavep" onclick = "bsavechp()">Save changes</button>
+</div>
+</div>
+
+<div id="users">
+
+</div>
+
+<div id = "uploadproduct">
+
+<input id = "pname" type="text">
+<textarea id = "pdescription" ></textarea>
+<input id = "pprice" type="text">
+<select id = "scategory"><option>category1</option><option>category2</option><option>category3</option></select>
+<input id = "upimg" type = "file" multiple="multiple"  name = "choose image to upload"> 
+<button id = "bsvp" onclick = "sendproduct()">Upload</button>
+</div>
+</div>
+</body>
+</html>

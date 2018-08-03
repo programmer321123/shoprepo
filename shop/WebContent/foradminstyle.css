@@ -1,0 +1,165 @@
+@charset "UTF-8";
+body{
+	
+}
+#menu{
+	width:100%;
+}
+.bmenu{
+	width:25%;
+	padding:2%;
+	float:left;
+}
+#middle{
+	width:70%;
+	margin-left:15%;
+}
+#uploadproduct{
+	width:100%;
+	display:none;
+}
+#orderdetails{
+	position:absolute;
+	top:15%;
+	width:70%;
+	display:none;
+	background:white;
+}
+.otitle{
+	font-size:1.8vw;
+}
+.pprotitle{
+	font-size:1.5vw;
+	float:left;
+}
+
+.pprocount{
+ font-size:1.5vw;
+	margin-left:3%;
+	float:left;
+}
+
+.pproprice{
+	font-size:1.5vw;
+	margin-left:3%;
+	float:left;
+}
+#uname{
+	clear:both;
+}
+#bcomp{
+	width:25%;
+	padding:1%;
+	margin-top:5%;
+	font-size:2vw;
+	display:none;
+}
+#closepd{
+	position:absolute;
+	top:0;
+	right:0;
+	font-size:2wv;
+	padding:2%;
+}
+
+#inpschpn{
+	width:50%;
+	font-size:1.5vw;
+	padding:2%;
+	float:left;
+	margin-top:2%;
+}
+
+
+#bschpbn{
+	width:25%;
+	margin-left:5%;
+	font-size:1.5vw;
+	padding:2%;
+	float:left;
+	margin-top:2%;
+}
+#foundpro{
+	width:100%;
+	clear:both
+}
+
+.imgbox{
+	width:20%;
+	float:left;
+}
+.imgpch{
+	width:100%;
+	height:auto;
+}
+
+#modifyproduct{
+	width:100%;
+	display:none;
+}
+.product{
+	width:20%;
+	clear:both;
+}
+.order{
+	width:25%;
+	float:left;
+}
+#chgpview{
+	position:absolute;
+	top:35%;
+	width:70%;
+	padding-bottom: 5%;
+	background:white;
+	display:none;
+}
+#chpname{
+	font-size:2vw;
+	padding:1%;
+}
+#chpdesc{
+	font-size:1.2vw;
+	width:80%;
+}
+
+#chpprice{
+	font-size: 1.5vw;
+	width:20%;
+}
+
+#ifain{
+	font-size: 1.5vw;
+	width:20%;
+}
+#bsavep{
+	width:80%;
+	font-size:1.8vw;
+	padding:1%;
+	margin-top:3%;
+}
+#chimgdiv{
+	width:100%;
+	margin-top:2%;
+}
+#pname{
+	width:30%;
+	font-size:2vw;
+	margin-top: 3%;
+}
+#pdescription{
+	width:80%;
+	margin-top:2%;
+}
+#pprice{
+	width:20%;
+	margin-top:2%;
+}
+#upimg{
+	width:80%;
+	margin-top:2%;
+}
+#bsvp{
+	width:20%;
+	margin-top:2%;
+	padding:1%;
+}

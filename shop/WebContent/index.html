@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+ <link rel ="stylesheet" href = "style.css" type = "text/css"/>
+<title>Shop</title>
+
+<script>
+var products;
+var curid, curimg;
+var cart = new Array();
+var cost = 0;
+var ifcv = false;
+var hmad = 0;
+var lad = new Array();
+var user;
+function reqcallback(){
+    if(this.status === 200){
+ 	   var res = JSON.parse(this.responseText);
+ 	   console.log(res);
+ 	   switch(res.type){
+ 	   case "log":
+ 		  if(res.result=="good"){
+ 			 console.log("zalogował");
+ 			 user=JSON.parse(res.user);
+			   document.getElementById("logdiv").style.display="none";
+	           if(user.type==="admin")  document.getElementById("adminb").style.visibility="visible";
+	           lad = JSON.parse(res.lad);
+	           console.log(" adresy " + res.lad);
+		      getcart();
+		  }else if(res.reult ==="notgood"){
+			   document.getElementById("logresp").innerHTML = "błędne hasło lub login";
+		  }
+ 		   break;
+ 	   case "regres":
+ 		   document.getElementById("regresp").innerHTML = res.result;
+ 		   break;
+ 	   case "products":
+ 		   products =  JSON.parse(res.data);
+ 		  products.forEach(displayproduct);
+ 		  break;
+ 	   case "cartlist":
+ 		   console.log("pobrał koszyk");
+ 		   var ctlist = JSON.parse(res.data);
+  		   ctlist.forEach(creatcartfl);
+  		    document.getElementById("ccost").innerHTML = "Total cost " + cost;
+ 		    break;
+ 	   case "myorders" :
+ 		  document.getElementById("worders").innerHTML = "";
+ 		  document.getElementById("comporders").innerHTML="";
+ 		   var olist = JSON.parse(res.data);
+ 		   olist.forEach(displayorder);
+ 		   break;
+ 	   case "ordersent":
+ 		   cost = 0;
+ 		   cart.splice(0,cart.length);
+ 		   document.getElementById("pinc").innerHTML = "";
+ 		   document.getElementById("ccost").innerHTML = "Total cost " + cost;
+ 		   break;
+         }
+}
+}
+
+
+function displayproduct(product,index){
+	var item = document.createElement("div");
+	item.setAttribute("id",index);
+	item.setAttribute("class","product");
+	item.setAttribute("onmouseenter","mouonitem("+index+")");
+	item.setAttribute("onmouseleave","mouofitem("+index+")");
+	item.setAttribute("onclick","itonclick("+index+")");
+	var imgt = document.createElement("img");
+	imgt.setAttribute("class","pimg");
+	imgt.setAttribute("src","http://something.nazwa.pl:8080/shop/images/"+product.id+"img"+"0.png");
+	item.appendChild(imgt);
+	var ptitle = document.createElement("p");
+	ptitle.setAttribute("class","pprotitle");
+	ptitle.innerHTML = product.name;
+	item.appendChild(ptitle);
+	var pprice = document.createElement("p");
+	pprice.setAttribute("class","pproprice");
+	pprice.innerHTML = product.price + "USD";
+	item.appendChild(pprice);
+	document.getElementById("products").appendChild(item);
+	
+}
+
+function creatcartfl(ctit,index){
+	cart.push(ctit);
+	var li = cart.length-1;
+	cost+=(cart[li].price*cart[li].count);
+	disncart(li);
+}
+
+function displayorder(order,index){
+	var item = document.createElement("div");
+	item.setAttribute("id","order" + index);
+	item.setAttribute("class","order");
+	var pname = document.createElement("p");
+	pname.setAttribute("class","ordername");
+	pname.innerHTML = order.products;
+	item.appendChild(pname);
+	var pprice = document.createElement("p");
+	pprice.setAttribute("class","orderprice");
+	pprice.innerHTML =order.price;
+	item.appendChild(pprice);
+	var pdate = document.createElement("p");
+	pdate.setAttribute("class","orderdate");
+	pdate.innerHTML = order.date;
+	item.appendChild(pdate);
+	if(order.pstate==2){
+	    document.getElementById("worders").appendChild(item);
+	}else{
+		document.getElementById("comporders").appendChild(item);
+	}
+}
+
+function login(){
+	var login = document.getElementById("login").value;
+	var password = document.getElementById("password").value;
+	var lreq = new XMLHttpRequest();
+	lreq.open("POST", "http://something.nazwa.pl:8080/shop/login?login=" + login + "&password=" + password, true); 
+    lreq.addEventListener('load',reqcallback);
+   lreq.send();
+}
+
+function getproducts(){
+	document.getElementById("products").innerHTML="";
+	var name = document.getElementById("searchbar").value;
+	var price =document.getElementById("pricein").value;
+	var category = document.getElementById("scategory").value;
+	var sorting = 	document.getElementById("ssorting").value;
+	console.log(name+price+category+sorting);
+	var req = new XMLHttpRequest();
+	req.open("GET", "http://something.nazwa.pl:8080/shop/getproducts?name="+name+"&price="+price+"&category="+category+"&sorting="+sorting+"&active=1", true); 
+    req.addEventListener('load',reqcallback);
+    req.send();
+}
+
+
+
+
+
+
+
+function mouonitem(id){
+	document.getElementById(id).style.border="thick solid #000000";
+}
+function mouofitem(id){
+	document.getElementById(id).style.border="";
+}
+function itonclick(id){
+	document.getElementById("menu").style.display = "none";
+	console.log(document.getElementById(id).offsetTop);
+	document.getElementById("pdetails").style.display = "block";
+     document.getElementById("pdetails").style.top =  document.getElementById(id).offsetTop + "px";
+	
+	curimg = 0;
+	document.getElementById("pbtitle").innerHTML = products[id].name;
+	document.getElementById("pbdesc").innerHTML = products[id].description;
+	document.getElementById("pbprice").innerHTML = "Price " + products[id].price + "USD";
+	document.getElementById("bpimg").src = "http://something.nazwa.pl:8080/shop/images/"+products[id].id+"img"+curimg+".png";
+	curid = id;
+}
+
+function closep(){
+	document.getElementById("pdetails").style.display = "none"; 
+	document.getElementById("menu").style.display = "block";
+}
+
+function pimg(){
+	if(curimg==0)curimg = products[curid].imgcount;
+		curimg--;
+		document.getElementById("bpimg").src = "http://something.nazwa.pl:8080/shop/images/"+products[curid].id+"img"+curimg+".png";
+}
+
+function nimg(){
+	if(curimg==products[curid].imgcount-1)curimg = -1;
+		curimg++;
+		document.getElementById("bpimg").src = "http://something.nazwa.pl:8080/shop/images/"+products[curid].id+"img"+curimg+".png";
+	
+}
+function addtocart(){
+	var iditex = 0;
+	var ifnew = true;
+	for(var i = 0;i<cart.length;i++){
+		console.log(products[curid].id + " cart " + cart[i].id);
+		if(cart[i].id==products[curid].id){
+			iditex = i;
+			ifnew = false;
+			console.log("idsitex assigned " + iditex + "i");
+			break;
+		}
+	}
+	console.log("iditex  " +iditex);
+	if(ifnew){
+	cart.push(products[curid]);
+	console.log(cart.length);
+	var ctli = cart.length-1;
+	cart[ctli].count =1;
+	disncart(ctli);
+	
+	 savetocart(ctli);
+	 }else{
+		cart[iditex].count++;
+		console.log("find this id " + cart[iditex].id);
+		document.getElementById("ccount"+iditex).innerHTML = cart[iditex].count;
+		document.getElementById("cprice"+iditex).innerHTML = cart[iditex].count * cart[iditex].price + "USD";
+		savetocart(iditex);
+	}
+	
+	cost+=products[curid].price;
+	document.getElementById("ccost").innerHTML = "Total cost " + cost;
+	}
+	
+function disncart(ctli){
+	 var ctit = document.createElement("div");
+	 ctit.setAttribute("id","citext" + ctli);
+	 ctit.setAttribute("class","cartitem");
+	 var pname = document.createElement("p");
+	 pname.setAttribute("class","pcttitle");
+	 pname.innerHTML = cart[ctli].name;
+	 ctit.appendChild(pname);
+	 var pcount = document.createElement("p");
+	 pcount.setAttribute("class","pccount");
+	 pcount.setAttribute("id","ccount"+ctli);
+	 pcount.innerHTML = cart[ctli].count;
+     ctit.appendChild(pcount);
+     
+	 var pprice = document.createElement("p");
+	 pprice.setAttribute("id","cprice"+ctli);
+	 pprice.setAttribute("class","pcprice");
+	 pprice.innerHTML = cart[ctli].count *cart[ctli].price + "USD";
+	 ctit.appendChild(pprice);
+	 document.getElementById("pinc").appendChild(ctit);
+}	
+	
+function scarext(){
+	ifcv = true;
+	 console.log("pokazuje");
+	var scroll = document.getElementById("menu").offsetTop+document.getElementById("bcart").offsetHeight;
+	console.log(scroll);
+	document.getElementById("cartext").style.display="block";
+	document.getElementById("cartext").style.top = scroll + "px";
+}	
+
+
+function hidcarext(){
+	ifcv = false;
+	 setTimeout(function () {
+		 if(!ifcv){
+		 console.log("ukrywam");
+		 document.getElementById("cartext").style.display="none";
+		 }
+	    }, 1000);
+	
+}
+
+
+function shelement(id){
+	console.log(id);
+		document.getElementById("mshop").style.display = "none";
+		document.getElementById("cart").style.display = "none";
+		document.getElementById("regdiv").style.display = "none";
+		document.getElementById("myaccount").style.display = "none";
+		document.getElementById("submitorder").style.display = "none";
+		document.getElementById("myorders").style.display = "none";
+	
+	if(id=="cart")crctv();
+	if(id=="myaccount") disadr("addresses","input");
+	if(id=="myorders") getmyorders();
+	document.getElementById(id).style.display = "block";
+}
+
+
+
+function itccountchnd(i){
+	var input = document.getElementById("ctitcount" + i);
+	if(input<=1)return;
+	var count = input.value;
+	var dif = (count - cart[i].count)*cart[i].price;
+	cost+=dif;
+	document.getElementById("tcp").innerHTML = "Total cost " + cost + "USD";
+	document.getElementById("ccost").innerHTML = "Total cost " + cost + "USD";
+	cart[i].count = count;
+	document.getElementById("ccount"+i).innerHTML = count;
+	var nprice =  cart[i].price * count;
+	document.getElementById("itcprice"+i).innerHTML = nprice+ "USD";
+	document.getElementById("cprice"+i).innerHTML = nprice+ "USD";
+	savetocart(i);
+}
+
+function crctv(){
+	 document.getElementById("cartitbox").innerHTML = "";
+	console.log("displaying cart");
+	for(var i =0; i<cart.length;i++){
+	  var box = document.createElement("div");
+	  box.setAttribute("id","cartit" + i);
+	  box.setAttribute("class","ctitb");
+	  var pname = document.createElement("p");
+	  pname.setAttribute("class","cittitle");
+	  pname.innerHTML = cart[i].name;
+	  box.appendChild(pname);
+	  var itcount = document.createElement("input");
+	  itcount.setAttribute("id","ctitcount" + i);
+	  itcount.setAttribute("oninput","itccountchnd('"+i+ "')");
+	  itcount.setAttribute("class","itcount");
+	  itcount.setAttribute("type","number");
+	  itcount.setAttribute("value",cart[i].count);
+	  box.appendChild(itcount);
+	  var pprice = document.createElement("p");
+	  pprice.setAttribute("id","itcprice"+i);
+	  pprice.setAttribute("class","itcprice");
+	  pprice.innerHTML = cart[i].price*cart[i].count + "USD";
+	  box.appendChild(pprice);
+	  var bdelete = document.createElement("button");
+	  bdelete.setAttribute("class","bdeletectit");
+	  bdelete.setAttribute("onclick","dfrct('"+i+"')");
+	  bdelete.innerHTML = "delete";
+	  box.appendChild(bdelete);
+	  document.getElementById("cartitbox").appendChild(box);
+	  }
+	document.getElementById("tcp").innerHTML = "Total cost " + cost;
+}
+
+function dfrct(i){
+	 deletecart(i);
+	cost = cost - cart[i].price * cart[i].count;
+	
+	//cart.splice(i);
+	var ittod = document.getElementById("cartit" + i);
+	ittod.parentNode.removeChild(ittod);
+	var ittode = document.getElementById("citext" + i);
+	ittode.parentNode.removeChild(ittode);
+	document.getElementById("tcp").innerHTML = "Total cost " + cost + "USD";
+	document.getElementById("ccost").innerHTML = "Total cost " + cost + "USD";
+}
+
+  function savetocart(i){
+	  var req = new XMLHttpRequest();
+		req.open("POST", "http://something.nazwa.pl:8080/shop/addtocart?idpro="+cart[i].id+"&count="+cart[i].count, true); 
+	    req.addEventListener('load',reqcallback);
+	    req.send();
+  } 
+  function deletecart(i){
+	  var req = new XMLHttpRequest();
+		req.open("POST", "http://something.nazwa.pl:8080/shop/deletecart?idpro="+cart[i].id+"&count="+cart[i].count, true); 
+	    req.addEventListener('load',reqcallback);
+	    req.send();
+  } 
+  function getcart(){
+	  var req = new XMLHttpRequest();
+		req.open("GET", "http://something.nazwa.pl:8080/shop/getcart", true); 
+	    req.addEventListener('load',reqcallback);
+	    req.send();
+  }
+ 
+  function onloadf(){
+	    var req = new XMLHttpRequest();
+		req.open("POST", "http://something.nazwa.pl:8080/shop/login", true); 
+	    req.addEventListener('load',reqcallback);
+	    req.send();
+	     getproducts();
+  }
+  function register(){
+	   var login = document.getElementById("loginr").value;
+	   var mail =  document.getElementById("mailr").value;
+		var password = document.getElementById("passwordr").value;
+		var req = new XMLHttpRequest();
+		req.open("POST", "http://something.nazwa.pl:8080/shop/register?login=" + login + "&password=" + password +"&mail=" + mail, true); 
+	    req.addEventListener('load',reqcallback);
+	    req.send();
+  }
+  function saveadr(){
+	  var forreq = "";
+	  console.log("lad lnght" + lad.length)
+      for(var i =0; i<hmad;i++){
+	  var adr = new Object();
+	 
+	  console.log("wysyłam adresy" + adr.idad);
+	  adr.street = document.getElementById("inputst" + i).value;
+	  adr.zipcode = document.getElementById("inputpcod" + i).value;
+	  adr.city = document.getElementById("inputcity" + i).value;
+	  if(i<lad.length){
+		  adr.idad = lad[i].idad; 
+		  lad[i] = adr;
+	  }else{
+		  adr.idad = 0;
+		  lad.push(adr);
+	  }
+	  forreq = forreq + "&idad" +  i +"=" + adr.idad +"&street" +  i +"=" + adr.street + "&zipcode"+  i +"=" + adr.zipcode + "&city" +  i +"=" + adr.city; 
+     
+      }
+      var req = new XMLHttpRequest();
+		req.open("POST","http://something.nazwa.pl:8080/shop/updatead?hmad="+hmad+forreq, true); 
+	    req.addEventListener('load',reqcallback);
+	    
+	    req.send();
+	  
+  }
+  
+  function addnewadview(where,elt){
+	    var item = document.createElement("div");
+		item.setAttribute("id",where + "addr" + hmad);
+		item.setAttribute("class","address");
+		var pst = document.createElement(elt);
+		pst.setAttribute("id",elt + "st" + hmad);
+		pst.setAttribute("class","inpst");
+		pst.setAttribute("type" , "text");
+		item.appendChild(pst);
+		var pco = document.createElement(elt);
+		pco.setAttribute("id",elt + "pcod" + hmad);
+		pco.setAttribute("class","inpcod");
+		pco.setAttribute("type" , "text");
+		item.appendChild(pco);
+		var pcity = document.createElement(elt);
+		pcity.setAttribute("id",elt +"city" + hmad);
+		pcity.setAttribute("class","inpcity");
+		pcity.setAttribute("type" , "text");
+		item.appendChild(pcity);
+		
+		if(where=="dvadr"){
+			var radio = document.createElement("input");
+			radio.setAttribute("id","rbad" + hmad);
+			radio.setAttribute("class","rbad");
+			radio.setAttribute("name","radioadde");
+			radio.setAttribute("value","Choose this");
+			radio.setAttribute("type" , "radio");
+			item.appendChild(radio);
+		}
+		console.log("where  " + where);
+		document.getElementById(where).appendChild(item);
+	    hmad++;
+  }
+  
+  function disadr(where,elt){
+	  hmad = 0;
+	  console.log("wyswietlam adresy");
+	  document.getElementById(where).innerHTML = "";
+	  for(var i =0; i<lad.length;i++){
+		  console.log("dodaje adresy  " + i + lad[i].street);
+		  addnewadview(where,elt);
+		  if(where=="addresses"){
+	  document.getElementById("inputst"+i).value = lad[i].street;
+	  document.getElementById("inputpcod"+i).value = lad[i].zipcode;
+	  document.getElementById("inputcity"+i).value = lad[i].city;
+		  }else{
+			  document.getElementById("pst"+i).innerHTML = lad[i].street;
+			  document.getElementById("ppcod"+i).innerHTML = lad[i].zipcode;
+			  document.getElementById("pcity"+i).innerHTML = lad[i].city;
+		  }
+	  }
+  }
+  
+  function dorderdata(){
+	  document.getElementById("submitorder").style.display = "block";
+	  document.getElementById("pusnameor").innerHTML=user.name;
+	  document.getElementById("pussurnameor").innerHTML=user.surname;
+	  document.getElementById("pmailor").innerHTML=user.mail;
+	  document.getElementById("pphoneor").innerHTML=user.phonenumber;
+	  disadr("dvadr","p");
+  }
+  
+  function order(){
+	  var address;
+	  for(var i =0;i<hmad;i++){
+		  if(document.getElementById("rbad"+i)){
+			  address = lad[i];
+			  break;
+		  }
+	  }
+	  var reqparam;
+	  if(address.idad!=null){
+		  reqparam = "?adid="+address.idad;
+	  }
+	  console.log(reqparam);
+	  var req = new XMLHttpRequest();
+		req.open("POST","http://something.nazwa.pl:8080/shop/order"+reqparam, true); 
+	    req.addEventListener('load',reqcallback);
+	    req.send();
+	    }
+  
+  
+  function getmyorders(){
+	  var req = new XMLHttpRequest();
+		req.open("POST", "http://something.nazwa.pl:8080/shop/getmyorders", true); 
+	    req.addEventListener('load',reqcallback);
+	    req.send();
+  }
+  
+
+</script>
+</head>
+<body onload = "onloadf()">
+
+
+<div id= "tdiv">
+<p id= "title">MyShop</p>
+</div>
+<div id = "leftside">
+<button id = "adminb" onclick = "window.open('http://something.nazwa.pl:8080/shop/foradmin','_self')">For shop owner</button>
+</div>
+<div id= "middle">
+<div id = "menu">
+<button id = "bshop" class = "bmenu" onclick = "shelement('mshop')">Shop</button>
+<button id = "bmyorders" class = "bmenu"  onclick = "shelement('myorders')">My Orders</button>
+<button id = "bmyaccount" class = "bmenu" onclick = "shelement('myaccount')">My Account</button>
+<button id = "bcart" class = "bmenu" onmouseenter = "scarext()"  onmouseleave = "hidcarext()" onclick = "shelement('cart')">Cart</button>
+</div>
+<div id = "cartext" onmouseenter="scarext()" onmouseleave = "hidcarext()"> <div id = "pinc"></div><div id = "ctsum">
+<p id = "ccost"></p>
+<button id = "borderp" onclick = "shelement('cart')">Order</button>
+</div>
+</div>
+<div id = "mshop">
+<div id = "pdetails" >
+<button id = "closepd" onclick = "closep()">X</button>
+<img id = "previmg" src= "back.png" onclick = "pimg()">
+<img id = "bpimg">
+<img id = "nextimg" src = "next.png" onclick = "nimg()">
+<p  id = "pbtitle"></p>
+<p id = "pbdesc"></p>
+<p id = "pbprice"></p>
+<button id = "badtoc" onclick = "addtocart()">Add to cart</button>
+</div>
+<div id="searchdiv"> 
+<input id = "searchbar" placeholder="name of pproduct" type = "text"> 
+<input id = "pricein" type = "number" placeholder="max price">
+<select id = "scategory"><option>category</option><option>category1</option><option>category2</option><option>category3</option></select>
+<select id = "ssorting"><option>sorting</option><option>from lowest price</option><option>from highest price</option><option>alphabetical</option></select>
+<button id = "bsearch" onclick = "getproducts()">Search</button>
+</div>
+<div id = "products">
+</div>
+</div>
+<div id = "cart">
+<div id = "cartitbox">
+</div>
+<p id  = "tcp"></p>
+<button id = "bsubord" onclick = "dorderdata()">Submit order</button>
+<div id = "submitorder">
+<p id = "pusnameor" class = "presda"></p>
+<p id = "pussurnameor" class = "presda"></p>
+<p id = "pmailor" class = "presda"></p>
+<p id = "pphoneor" class = "presda"></p>
+<p id = "chda">Choose delivery address</p>
+<div id = "dvadr"></div>
+<button id = "oranpay" onclick = "order()">Order&Pay</button>
+</div>
+</div>
+<div id = "regdiv">
+<p class = "regp">Login</p>
+<input id = "loginr" type = "text" class = "reg">
+<p class = "regp">e-mail</p>
+<input id = "mailr" type = "text" class = "reg">
+<p class= "regp">Password</p>
+<input id = "passwordr" type = "password" class = "reg">
+<button id= "breg" onclick = "register()">Signin</button>
+<div id  = "regresp"></div>
+</div>
+
+<div id = "myaccount">
+<p class = "subtitle">Addresses</p>
+<div id = "addresses"></div>
+<button class = "badr" onclick = "addnewadview('addresses','input')">Add new address</button>
+<button  class = "badr" onclick = "saveadr()">Save changes</button>
+</div>
+
+<div id = "myorders">
+<p class = "subtitle">Waiting</p>
+<div id = "worders"></div>
+<p class = "subtitle">Completed</p>
+<div id = "comporders"></div>
+</div>
+
+</div>
+<div id = "rightside">
+<div id = "logdiv">
+<p class = "log">Login</p>
+<input id = "login" type = "text" class = "log">
+<p class= "log">Password</p>
+<input id = "password" type = "password" class = "log">
+<button class = "blog" onclick = "login()">Login</button>
+<div id  = "logresp"></div>
+<p id = "orlog">or</p>
+<button class = "blog" onclick = "shelement('regdiv')">Signin</button>
+</div>
+</div>
+
+</body>
+</html>
